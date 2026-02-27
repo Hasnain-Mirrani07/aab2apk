@@ -1,0 +1,4 @@
+node_modules/
+bundletool/*.jar
+.env
+*.log
