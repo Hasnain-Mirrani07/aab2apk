@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
@@ -32,6 +34,49 @@ class _HomeScreenState extends State<HomeScreen> {
   double _uploadProgress = 0;
   String? _analyzeError;
   String? _convertError;
+
+  String _formatDioError(Object e) {
+    if (e is DioException) {
+      final status = e.response?.statusCode;
+      final data = e.response?.data;
+      // /convert uses responseType: bytes, so 500 error body may be List<int>
+      String? serverError;
+      if (data is Map && data['error'] is String) {
+        serverError = data['error'] as String;
+      } else if (data is List<int> && data.isNotEmpty) {
+        try {
+          final json = String.fromCharCodes(data);
+          final decoded = Map<String, dynamic>.from(
+            (jsonDecode(json) as Map).cast<String, dynamic>(),
+          );
+          if (decoded['error'] is String) serverError = decoded['error'] as String;
+        } catch (_) {}
+      }
+      final base = switch (e.type) {
+        DioExceptionType.connectionTimeout => 'Connection timed out',
+        DioExceptionType.sendTimeout => 'Upload timed out',
+        DioExceptionType.receiveTimeout => 'Server response timed out',
+        DioExceptionType.badCertificate => 'Bad certificate / hostname mismatch',
+        DioExceptionType.connectionError => 'Network connection error',
+        DioExceptionType.cancel => 'Request cancelled',
+        DioExceptionType.badResponse => 'Server error',
+        DioExceptionType.unknown => 'Network error',
+      };
+      final details = <String>[
+        if (status != null) 'HTTP $status',
+        if (serverError != null && serverError.isNotEmpty) serverError,
+        if (e.message != null && e.message!.isNotEmpty) e.message!,
+      ].where((s) => s.trim().isNotEmpty).join(' • ');
+      final msg = details.isEmpty ? base : '$base • $details';
+      final isUnreachable = e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.connectionError;
+      final hint = isUnreachable
+          ? '\n\nMake sure the AAB2APK server is running on your computer: open a terminal, run “cd server && npm start”, and use the same Wi‑Fi for a physical device.'
+          : '';
+      return msg + hint;
+    }
+    return e.toString().replaceFirst(RegExp(r'^Exception: '), '');
+  }
 
   Future<void> _pickFile() async {
     final granted = await _fileService.requestStoragePermission();
@@ -94,9 +139,11 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     } catch (e) {
+      // ignore: avoid_print
+      print('[Analyze] error: $e');
       if (mounted) {
         setState(() {
-          _analyzeError = e.toString().replaceFirst(RegExp(r'^Exception: '), '');
+          _analyzeError = _formatDioError(e);
           _analyzing = false;
         });
       }
@@ -129,9 +176,11 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
     } catch (e) {
+      // ignore: avoid_print
+      print('[Convert] error: $e');
       if (mounted) {
         setState(() {
-          _convertError = e.toString().replaceFirst(RegExp(r'^Exception: '), '');
+          _convertError = _formatDioError(e);
         });
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Conversion failed: $_convertError')));
       }

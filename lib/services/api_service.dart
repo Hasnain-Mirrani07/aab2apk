@@ -7,7 +7,17 @@ import '../constants.dart';
 import '../models/analysis_response.dart';
 
 class ApiService {
-  ApiService({String? baseUrl}) : _dio = Dio(BaseOptions(baseUrl: baseUrl ?? apiBaseUrl)) {
+  ApiService({String? baseUrl})
+      : _dio = Dio(
+          BaseOptions(
+            baseUrl: baseUrl ?? apiBaseUrl,
+            connectTimeout: const Duration(seconds: 60),
+            sendTimeout: const Duration(minutes: 5),
+            receiveTimeout: const Duration(minutes: 5),
+            // Keep receiving bytes for /convert.
+            responseType: ResponseType.json,
+          ),
+        ) {
     if (allowInsecureConnections && _dio.httpClientAdapter is IOHttpClientAdapter) {
       (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
         final client = HttpClient();
@@ -15,6 +25,33 @@ class ApiService {
         return client;
       };
     }
+
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          // Avoid logging large bodies (e.g. APK bytes), but log endpoints.
+          // ignore: avoid_print
+          print('[Dio] --> ${options.method} ${options.uri}');
+          handler.next(options);
+        },
+        onResponse: (response, handler) {
+          // ignore: avoid_print
+          print('[Dio] <-- ${response.statusCode} ${response.requestOptions.uri}');
+          handler.next(response);
+        },
+        onError: (e, handler) {
+          final status = e.response?.statusCode;
+          final uri = e.requestOptions.uri;
+          // ignore: avoid_print
+          print('[Dio] xx  $uri');
+          // ignore: avoid_print
+          print('[Dio]     type=${e.type} status=$status message=${e.message}');
+          // ignore: avoid_print
+          if (e.response?.data != null) print('[Dio]     data=${e.response?.data}');
+          handler.next(e);
+        },
+      ),
+    );
   }
 
   final Dio _dio;

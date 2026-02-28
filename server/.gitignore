@@ -1,4 +1,5 @@
 node_modules/
 bundletool/*.jar
+keystore/
 .env
 *.log
