@@ -11,9 +11,9 @@ class ApiService {
       : _dio = Dio(
           BaseOptions(
             baseUrl: baseUrl ?? apiBaseUrl,
-            connectTimeout: const Duration(seconds: 60),
-            sendTimeout: const Duration(minutes: 5),
-            receiveTimeout: const Duration(minutes: 5),
+            connectTimeout: const Duration(seconds: 120),
+            sendTimeout: const Duration(minutes: 6),
+            receiveTimeout: const Duration(minutes: 6),
             // Keep receiving bytes for /convert.
             responseType: ResponseType.json,
           ),

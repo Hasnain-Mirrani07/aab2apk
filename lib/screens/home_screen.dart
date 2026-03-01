@@ -70,9 +70,14 @@ class _HomeScreenState extends State<HomeScreen> {
       final msg = details.isEmpty ? base : '$base • $details';
       final isUnreachable = e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.connectionError;
-      final hint = isUnreachable
+      var hint = isUnreachable
           ? '\n\nMake sure the AAB2APK server is running on your computer: open a terminal, run “cd server && npm start”, and use the same Wi‑Fi for a physical device.'
           : '';
+      final isConnectionAbort = e.type == DioExceptionType.unknown &&
+          (e.message == null || (e.message ?? '').toLowerCase().contains('abort') || (e.message ?? '').toLowerCase().contains('connection'));
+      if (isConnectionAbort) {
+        hint = '\n\nIf you use Render free tier, the server may be waking up (first request can take 1-2 min). Wait a moment and tap Retry.';
+      }
       return msg + hint;
     }
     return e.toString().replaceFirst(RegExp(r'^Exception: '), '');

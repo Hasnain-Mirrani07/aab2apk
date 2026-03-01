@@ -1,8 +1,7 @@
 /// API base URL — set to your backend (no trailing slash).
-/// Run server: cd server && npm start (it prints your LAN IP).
-/// Using your Mac's LAN IP so the emulator can reach the server (10.0.2.2 often fails).
-/// If your IP changes, update this or use http://10.0.2.2:3000 for emulator.
-const String apiBaseUrl = 'http://192.168.100.4:3000';
+/// Live API: https://aab2apk.onrender.com
+/// For local dev: http://10.0.2.2:3000 (emulator) or http://YOUR_LAN_IP:3000 (device).
+const String apiBaseUrl = 'https://aab2apk.onrender.com';
 
 /// Set to true only for development (self-signed cert or hostname mismatch).
 /// Do not enable in production.
