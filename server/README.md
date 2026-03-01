@@ -74,8 +74,12 @@ Override with environment variables:
   `apiBaseUrl = 'http://YOUR_MACHINE_IP:3000'` for a physical device on the same network.
 - If you use HTTPS with a self-signed cert or see hostname mismatch, set `allowInsecureConnections = true` in `constants.dart` for development only.
 
-## Deploy (e.g. free tier)
+## Deploy to a live server
 
-- The server needs **Java** and **Node** and a way to run **bundletool** (JAR on the host or in the image).
-- Example: **Docker** image with Node + OpenJDK, copy `bundletool-all.jar` into the image, run `node index.js`.
-- Deploy to **Render**, **Railway**, **Fly.io**, or any VPS; set `PORT` and point the Flutter app’s `apiBaseUrl` to your deployed URL.
+See **[DEPLOY.md](DEPLOY.md)** for step-by-step instructions to host the API on:
+
+- **Railway** or **Render** (easiest; use the included Dockerfile)
+- **Fly.io**
+- **VPS** (DigitalOcean, Linode, etc.) with Docker
+
+After deployment, set `apiBaseUrl` in your Flutter app’s `lib/constants.dart` to your public URL (e.g. `https://your-app.up.railway.app`).
