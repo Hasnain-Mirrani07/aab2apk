@@ -10,7 +10,7 @@
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" tools:ignore="ScopedStorage" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <application
-        android:label="BundleLens"
+        android:label="AAB2APK Installer"
         android:requestLegacyExternalStorage="true"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
@@ -63,5 +63,8 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
+        <!-- Package visibility: allow launching system installer directly (no app chooser) -->
+        <package android:name="com.android.packageinstaller" />
+        <package android:name="com.google.android.packageinstaller" />
     </queries>
 </manifest>

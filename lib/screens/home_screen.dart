@@ -26,6 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final ApiService _api = ApiService();
   final FileService _fileService = FileService();
 
+  bool _isApkTab = false;
   PlatformFile? _pickedFile;
   File? _file;
   AnalysisResponse? _analysis;
@@ -108,10 +109,11 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
     final name = platformFile.name.toLowerCase();
-    if (!name.endsWith('.aab')) {
+    final expectedExt = _isApkTab ? '.apk' : '.aab';
+    if (!name.endsWith(expectedExt)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select an .aab file')),
+          SnackBar(content: Text('Please select an $expectedExt file')),
         );
       }
       return;
@@ -168,7 +170,8 @@ class _HomeScreenState extends State<HomeScreen> {
         if (mounted) setState(() => _uploadProgress = p);
       });
 
-      final fileName = '${_pickedFile?.name.replaceAll('.aab', '') ?? 'app'}_universal.apk';
+      final baseName = _pickedFile?.name.replaceAll(RegExp(r'\.aab$'), '') ?? 'app';
+      final fileName = '${baseName}_universal.apk';
       final savedPath = await _fileService.saveToDownloads(bytes, fileName);
 
       if (!mounted) return;
@@ -212,9 +215,9 @@ class _HomeScreenState extends State<HomeScreen> {
               slivers: [
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
                     child: Text(
-                      'Convert AAB to APK',
+                      _isApkTab ? 'Analyze APK' : 'Convert AAB to APK',
                       style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                             color: AppTheme.onBackground,
                             fontWeight: FontWeight.bold,
@@ -225,10 +228,40 @@ class _HomeScreenState extends State<HomeScreen> {
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: SegmentedButton<bool>(
+                            segments: const [
+                              ButtonSegment(value: false, label: Text('AAB'), icon: Icon(Icons.folder_zip, size: 18)),
+                              ButtonSegment(value: true, label: Text('APK'), icon: Icon(Icons.android, size: 18)),
+                            ],
+                            selected: {_isApkTab},
+                            onSelectionChanged: (Set<bool> selected) {
+                              setState(() {
+                                _isApkTab = selected.first;
+                                _pickedFile = null;
+                                _file = null;
+                                _analysis = null;
+                                _analyzeError = null;
+                                _convertError = null;
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: DropZone(
                       onTap: _pickFile,
                       fileName: _pickedFile?.name,
                       fileSize: _pickedFile?.size,
+                      hint: _isApkTab ? 'Tap to pick an APK file' : 'Tap to pick an AAB file',
                     ),
                   ),
                 ),
@@ -274,6 +307,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       aabFileSizeBytes: _pickedFile?.size,
                       onConvert: _convert,
                       onViewFileContents: _showFileContents,
+                      showConvertButton: !_isApkTab,
                     ),
                   ),
                 const SliverToBoxAdapter(child: SizedBox(height: 40)),

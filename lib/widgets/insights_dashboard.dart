@@ -11,12 +11,14 @@ class InsightsDashboard extends StatelessWidget {
     this.aabFileSizeBytes,
     required this.onConvert,
     required this.onViewFileContents,
+    this.showConvertButton = true,
   });
 
   final AnalysisResponse analysis;
   final int? aabFileSizeBytes;
   final VoidCallback onConvert;
   final VoidCallback onViewFileContents;
+  final bool showConvertButton;
 
   static String _formatBytes(int bytes) {
     if (bytes < 1024) return '$bytes B';
@@ -66,6 +68,56 @@ class InsightsDashboard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
+
+          // Permissions
+          if (analysis.permissions != null && analysis.permissions!.isNotEmpty) ...[
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Text('Permissions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.onSurface)),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(color: AppTheme.electricBlue.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
+                          child: Text('${analysis.permissionsCount ?? analysis.permissions!.length}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.electricBlue)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    ...(analysis.permissions!.take(50).map((p) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(Icons.check_circle_outline, size: 16, color: AppTheme.onSurface.withValues(alpha: 0.7)),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  p,
+                                  style: const TextStyle(fontSize: 12, color: AppTheme.onSurface),
+                                  maxLines: 10,
+                                  overflow: TextOverflow.visible,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ))),
+                    if (analysis.permissions!.length > 50)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text('+ ${analysis.permissions!.length - 50} more', style: TextStyle(fontSize: 12, color: AppTheme.onSurface.withValues(alpha: 0.7))),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
 
           // Size breakdown (donut)
           Card(
@@ -153,12 +205,14 @@ class InsightsDashboard extends StatelessWidget {
             icon: const Icon(Icons.folder_open, size: 20),
             label: const Text('View file contents'),
           ),
-          const SizedBox(height: 12),
-          FilledButton.icon(
-            onPressed: onConvert,
-            icon: const Icon(Icons.transform, size: 20),
-            label: const Text('Convert now'),
-          ),
+          if (showConvertButton) ...[
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: onConvert,
+              icon: const Icon(Icons.transform, size: 20),
+              label: const Text('Convert AAB to APK'),
+            ),
+          ],
           const SizedBox(height: 24),
         ],
       ),

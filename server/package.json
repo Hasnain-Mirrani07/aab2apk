@@ -1,7 +1,7 @@
 {
   "name": "aab2apk-server",
   "version": "1.0.0",
-  "description": "Node.js API to analyze AAB and convert AAB to universal APK using bundletool",
+  "description": "Node.js API to analyze AAB/APK and convert AAB to universal APK using bundletool",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -11,7 +11,8 @@
     "cors": "^2.8.5",
     "express": "^4.21.0",
     "multer": "^1.4.5-lts.1",
-    "adm-zip": "^0.5.16"
+    "adm-zip": "^0.5.16",
+    "app-info-parser": "^1.1.6"
   },
   "engines": {
     "node": ">=18"

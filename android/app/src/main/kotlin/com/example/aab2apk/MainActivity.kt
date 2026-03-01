@@ -1,5 +1,6 @@
 package com.example.aab2apk
 
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -43,7 +44,26 @@ class MainActivity : FlutterActivity() {
                         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     }
-                    startActivity(intent)
+                    // Prefer system Package Installer so the install screen opens directly (no app chooser)
+                    val installerPackages = listOf(
+                        "com.android.packageinstaller",
+                        "com.google.android.packageinstaller"
+                    )
+                    var started = false
+                    for (pkg in installerPackages) {
+                        try {
+                            intent.setPackage(pkg)
+                            startActivity(intent)
+                            started = true
+                            break
+                        } catch (_: ActivityNotFoundException) {
+                            intent.setPackage(null)
+                        }
+                    }
+                    if (!started) {
+                        intent.setPackage(null)
+                        startActivity(intent)
+                    }
                     result.success(true)
                 } catch (e: Exception) {
                     result.success(false)

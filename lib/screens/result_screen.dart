@@ -44,13 +44,18 @@ class ResultScreen extends StatelessWidget {
                 fileName,
                 style: TextStyle(color: AppTheme.electricBlue, fontSize: 14),
                 textAlign: TextAlign.center,
-                maxLines: 2,
+                maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 32),
               FilledButton.icon(
                 onPressed: () async {
-                  await fileService.openFile(apkPath);
+                  final ok = await fileService.openFile(apkPath);
+                  if (!ok && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Could not open installer. Check file or allow "Install unknown apps" for this app.')),
+                    );
+                  }
                 },
                 icon: const Icon(Icons.install_mobile),
                 label: const Text('Install APK'),
@@ -58,6 +63,11 @@ class ResultScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                   backgroundColor: AppTheme.electricBlue,
                 ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Opens system package installer',
+                style: TextStyle(color: AppTheme.onSurface.withValues(alpha: 0.7), fontSize: 12),
               ),
               const SizedBox(height: 12),
               OutlinedButton.icon(

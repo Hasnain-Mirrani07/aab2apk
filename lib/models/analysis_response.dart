@@ -10,6 +10,8 @@ class AnalysisResponse {
     this.maxInstallSizeBytes,
     this.aabSizeBytes,
     this.estimatedUniversalApkSizeBytes,
+    this.permissions,
+    this.permissionsCount,
     this.sizeBreakdown,
     this.topLargestFiles,
     this.folderSizes,
@@ -24,6 +26,8 @@ class AnalysisResponse {
   final int? maxInstallSizeBytes;
   final int? aabSizeBytes;
   final int? estimatedUniversalApkSizeBytes;
+  final List<String>? permissions;
+  final int? permissionsCount;
   final SizeBreakdown? sizeBreakdown;
   final List<FileEntry>? topLargestFiles;
   final Map<String, int>? folderSizes;
@@ -39,6 +43,8 @@ class AnalysisResponse {
       maxInstallSizeBytes: json['maxInstallSizeBytes'] as int? ?? json['max_install_size_bytes'] as int?,
       aabSizeBytes: json['aabSizeBytes'] as int? ?? json['aab_size_bytes'] as int?,
       estimatedUniversalApkSizeBytes: json['estimatedUniversalApkSizeBytes'] as int? ?? json['estimated_universal_apk_size_bytes'] as int?,
+      permissions: (json['permissions'] as List<dynamic>?)?.map((e) => e.toString()).toList(),
+      permissionsCount: json['permissionsCount'] as int? ?? json['permissions_count'] as int?,
       sizeBreakdown: json['sizeBreakdown'] != null || json['size_breakdown'] != null
           ? SizeBreakdown.fromJson((json['sizeBreakdown'] ?? json['size_breakdown']) as Map<String, dynamic>)
           : null,

@@ -8,11 +8,13 @@ class DropZone extends StatelessWidget {
     required this.onTap,
     this.fileName,
     this.fileSize,
+    this.hint,
   });
 
   final VoidCallback onTap;
   final String? fileName;
   final int? fileSize;
+  final String? hint;
 
   static String _formatBytes(int bytes) {
     if (bytes < 1024) return '$bytes B';
@@ -48,7 +50,7 @@ class DropZone extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              hasFile ? (fileName ?? '') : 'Tap to select .aab file',
+              hasFile ? (fileName ?? '') : (hint ?? 'Tap to select file'),
               style: TextStyle(
                 fontSize: 16,
                 color: hasFile ? AppTheme.electricBlueLight : AppTheme.onSurface,

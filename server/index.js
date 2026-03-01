@@ -6,6 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
 const os = require('os');
+const AppInfoParser = require('app-info-parser');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -116,6 +117,15 @@ async function ensureDebugKeystore() {
   ]);
 }
 
+/** Extract permission names from manifest XML (AAB). */
+function extractPermissionsFromManifest(manifestXml) {
+  const names = [];
+  const re = /uses-permission[^>]*android:name="([^"]+)"/gi;
+  let m;
+  while ((m = re.exec(manifestXml)) !== null) names.push(m[1]);
+  return [...new Set(names)];
+}
+
 function buildApksArgs(bundlePath, apksOutPath) {
   return [
     'build-apks',
@@ -147,6 +157,60 @@ app.post('/analyze', upload.single('file'), async (req, res) => {
   };
 
   try {
+    const isApk = (file.originalname || '').toLowerCase().endsWith('.apk');
+    if (isApk) {
+      const apkSizeBytes = fs.statSync(file.path).size;
+      const parser = new AppInfoParser(file.path);
+      const apkInfo = await parser.parse();
+      const rawPerms = apkInfo.use_permissions || apkInfo.permissions || [];
+      const permissionsList = (Array.isArray(rawPerms) ? rawPerms : (rawPerms ? [rawPerms] : [])).map((p) => (typeof p === 'string' ? p : (p && p.name) ? p.name : String(p)));
+      const zip = new AdmZip(file.path);
+      const entries = zip.getEntries();
+      const byFolder = {};
+      const allFiles = [];
+      for (const e of entries) {
+        if (e.isDirectory) continue;
+        const name = e.entryName;
+        const size = e.header.size;
+        allFiles.push({ path: name, sizeBytes: size });
+        const top = name.split('/')[0] || 'root';
+        byFolder[top] = (byFolder[top] || 0) + size;
+      }
+      const byPath = (re) => allFiles.reduce((s, f) => (re.test(f.path) ? s + f.sizeBytes : s), 0);
+      const dexBytes = byPath(/\.dex$/i);
+      const resourcesBytes = byPath(/^res\//i);
+      const assetsBytes = byPath(/^assets\//i);
+      const nativeLibsBytes = byPath(/\.so$/i) || byPath(/^lib\//i);
+      const otherBytes = apkSizeBytes - (dexBytes + resourcesBytes + assetsBytes + nativeLibsBytes);
+      const topLargestFiles = allFiles
+        .sort((a, b) => b.sizeBytes - a.sizeBytes)
+        .slice(0, 15)
+        .map(({ path: p, sizeBytes }) => ({ path: p, sizeBytes }));
+      console.log('[POST /analyze] Response: 200 OK (APK)', { packageName: apkInfo.package, permissionsCount: permissionsList.length });
+      return res.json({
+        packageName: apkInfo.package || null,
+        versionName: apkInfo.versionName || null,
+        versionCode: apkInfo.versionCode != null ? parseInt(apkInfo.versionCode, 10) : null,
+        minSdkVersion: apkInfo.minSdkVersion != null ? parseInt(apkInfo.minSdkVersion, 10) : null,
+        signed: false,
+        aabSizeBytes: apkSizeBytes,
+        minDownloadSizeBytes: null,
+        maxInstallSizeBytes: null,
+        estimatedUniversalApkSizeBytes: null,
+        permissions: permissionsList,
+        permissionsCount: permissionsList.length,
+        sizeBreakdown: {
+          dexBytes,
+          resourcesBytes,
+          assetsBytes,
+          nativeLibsBytes,
+          otherBytes: Math.max(0, otherBytes),
+        },
+        topLargestFiles,
+        folderSizes: byFolder,
+      });
+    }
+
     const zip = new AdmZip(file.path);
     const entries = zip.getEntries();
     const aabSizeBytes = fs.statSync(file.path).size;
@@ -179,6 +243,7 @@ app.post('/analyze', upload.single('file'), async (req, res) => {
     let minSdkVersion = null;
     let signed = false;
 
+    let permissions = [];
     try {
       ensureBundletool();
       const manifestOut = await runBundletool(['dump', 'manifest', '--bundle=' + file.path]);
@@ -191,6 +256,7 @@ app.post('/analyze', upload.single('file'), async (req, res) => {
       if (verCodeMatch) versionCode = parseInt(verCodeMatch[1], 10);
       if (minSdkMatch) minSdkVersion = parseInt(minSdkMatch[1], 10);
       signed = manifestOut.includes('android:signing');
+      permissions = extractPermissionsFromManifest(manifestOut);
     } catch (_) {
       // bundletool missing or failed; keep zip-based response
     }
@@ -213,7 +279,7 @@ app.post('/analyze', upload.single('file'), async (req, res) => {
 
     const estimatedUniversalApkSizeBytes = maxInstallSizeBytes || Math.round(aabSizeBytes * 1.1);
 
-    console.log('[POST /analyze] Response: 200 OK', { packageName, aabSizeBytes });
+    console.log('[POST /analyze] Response: 200 OK', { packageName, aabSizeBytes, permissionsCount: permissions.length });
     res.json({
       packageName,
       versionName,
@@ -224,6 +290,8 @@ app.post('/analyze', upload.single('file'), async (req, res) => {
       minDownloadSizeBytes,
       maxInstallSizeBytes,
       estimatedUniversalApkSizeBytes,
+      permissions,
+      permissionsCount: permissions.length,
       sizeBreakdown: {
         dexBytes,
         resourcesBytes,
