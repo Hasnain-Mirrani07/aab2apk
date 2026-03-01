@@ -1,6 +1,6 @@
 /// Set to true to use your computer's server (run: cd server && npm start).
 /// Set to false to use the live Render API.
-const bool useLocalServer = true;
+const bool useLocalServer = false;
 
 /// Your computer's IP on the same Wi‑Fi as the emulator/device (run server and check "LAN IP(s)" in the terminal).
 /// Ignored when [useLocalServer] is false.
