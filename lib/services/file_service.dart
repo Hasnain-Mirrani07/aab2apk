@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-const MethodChannel _channel = MethodChannel('com.example.aab2apk/open_file');
+const MethodChannel _channel = MethodChannel('com.applooms.bundlesnap/open_file');
 
 class FileService {
   /// Request storage permissions (Android 10 and below).

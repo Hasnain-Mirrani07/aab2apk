@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../models/analysis_response.dart';
@@ -146,8 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     } catch (e) {
-      // ignore: avoid_print
-      print('[Analyze] error: $e');
+      if (kDebugMode) debugPrint('[Analyze] error: $e');
       if (mounted) {
         setState(() {
           _analyzeError = _formatDioError(e);
@@ -184,8 +184,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
     } catch (e) {
-      // ignore: avoid_print
-      print('[Convert] error: $e');
+      if (kDebugMode) debugPrint('[Convert] error: $e');
       if (mounted) {
         setState(() {
           _convertError = _formatDioError(e);

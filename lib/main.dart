@@ -13,7 +13,7 @@ class BundleLensApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'BundleLens',
+      title: 'BundleSnap',
       theme: AppTheme.dark,
       debugShowCheckedModeBanner: false,
       home: const HomeScreen(),

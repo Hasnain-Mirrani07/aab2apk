@@ -1,6 +1,7 @@
-/// Set to true to use your computer's server (run: cd server && npm start).
-/// Set to false to use the live Render API.
-const bool useLocalServer = false;
+import 'package:flutter/foundation.dart';
+
+/// In release builds always use the live API. For local dev set to true and set [localServerHost].
+const bool useLocalServer = kDebugMode && false;
 
 /// Your computer's IP on the same Wi‑Fi as the emulator/device (run server and check "LAN IP(s)" in the terminal).
 /// Ignored when [useLocalServer] is false.

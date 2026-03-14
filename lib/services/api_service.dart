@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 
@@ -29,25 +30,19 @@ class ApiService {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
-          // Avoid logging large bodies (e.g. APK bytes), but log endpoints.
-          // ignore: avoid_print
-          print('[Dio] --> ${options.method} ${options.uri}');
+          if (kDebugMode) debugPrint('[Dio] --> ${options.method} ${options.uri}');
           handler.next(options);
         },
         onResponse: (response, handler) {
-          // ignore: avoid_print
-          print('[Dio] <-- ${response.statusCode} ${response.requestOptions.uri}');
+          if (kDebugMode) debugPrint('[Dio] <-- ${response.statusCode} ${response.requestOptions.uri}');
           handler.next(response);
         },
         onError: (e, handler) {
-          final status = e.response?.statusCode;
-          final uri = e.requestOptions.uri;
-          // ignore: avoid_print
-          print('[Dio] xx  $uri');
-          // ignore: avoid_print
-          print('[Dio]     type=${e.type} status=$status message=${e.message}');
-          // ignore: avoid_print
-          if (e.response?.data != null) print('[Dio]     data=${e.response?.data}');
+          if (kDebugMode) {
+            final status = e.response?.statusCode;
+            final uri = e.requestOptions.uri;
+            debugPrint('[Dio] xx  $uri type=${e.type} status=$status message=${e.message}');
+          }
           handler.next(e);
         },
       ),
